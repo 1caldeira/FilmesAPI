@@ -1,4 +1,6 @@
-﻿using FilmesAPI.Data;
+﻿using AutoMapper;
+using FilmesAPI.Data;
+using FilmesAPI.Data.DTOs;
 using FilmesAPI.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -10,15 +12,17 @@ namespace FilmesAPI.Controllers;
 public class FilmeController : ControllerBase
 {
     private FilmeContext _context;
+    private IMapper _mapper;
 
-    public FilmeController(FilmeContext context)
+    public FilmeController(FilmeContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
     [HttpPost]
-    public IActionResult AdicionaFilme([FromBody] Filme filme) {
-
+    public IActionResult AdicionaFilme([FromBody] CreateFilmeDTO filmeDTO) {
+        Filme filme = _mapper.Map<Filme>(filmeDTO);
         _context.Filmes.Add(filme);
         _context.SaveChanges();
         return CreatedAtAction(nameof(GetFilmeById), new {id = filme.Id}, filme);
