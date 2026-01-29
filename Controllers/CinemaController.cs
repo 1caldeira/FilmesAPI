@@ -38,9 +38,12 @@ public class CinemaController : ControllerBase
         return Ok(cinemaDTO);
     }
     [HttpGet]
-    public IEnumerable<ReadCinemaDTO> ObterCinemas([FromQuery] int skip = 0, [FromQuery] int take = 25) {
-
-        var listaDeCinemas = _context.Cinemas.OrderBy(c => c.Nome).Skip(skip).Take(take).ToList();
+    public IEnumerable<ReadCinemaDTO> ObterCinemas([FromQuery] int skip = 0, [FromQuery] int take = 25, [FromQuery] int? enderecoId = null) {
+        var query = _context.Cinemas.AsQueryable();
+        if (enderecoId != null) {
+            query = query.Where(cinema => cinema.EnderecoId == enderecoId);
+        }
+        var listaDeCinemas = query.OrderBy(c => c.Nome).Skip(skip).Take(take).ToList();
 
         return _mapper.Map<List<ReadCinemaDTO>>(listaDeCinemas);
     }

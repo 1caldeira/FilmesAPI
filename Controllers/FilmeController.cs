@@ -48,8 +48,12 @@ public class FilmeController : ControllerBase
     /// <response code="200">Retorna a lista de filmes com sucesso</response>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public IEnumerable<ReadFilmeDTO> ObterFilmes([FromQuery] int skip = 0, [FromQuery] int take = 25) {
-        return _mapper.Map<List<ReadFilmeDTO>>(_context.Filmes.OrderBy(f => f.Titulo).Skip(skip).Take(take).ToList());
+    public IEnumerable<ReadFilmeDTO> ObterFilmes([FromQuery] int skip = 0, [FromQuery] int take = 25, [FromQuery] int? cinemaId = null) {
+        var query = _context.Filmes.AsQueryable();
+        if (cinemaId != null) {
+            query = query.Where(f => f.Sessoes.Any(s => s.CinemaId == cinemaId));
+        }
+        return _mapper.Map<List<ReadFilmeDTO>>(query.OrderBy(f => f.Titulo).Skip(skip).Take(take).ToList());
     }
 
     /// <summary>
