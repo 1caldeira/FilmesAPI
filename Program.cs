@@ -5,6 +5,7 @@ using Microsoft.OpenApi;
 using Newtonsoft.Json; 
 using System.Reflection;
 using Microsoft.AspNetCore.Identity;
+using FilmesAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("FilmeConnection");
@@ -24,6 +25,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddScoped<CadastroService>();
 
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
