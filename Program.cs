@@ -25,7 +25,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-builder.Services.AddScoped<CadastroService>();
+builder.Services.AddScoped<UsuarioService>();
 
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
