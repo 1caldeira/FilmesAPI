@@ -20,7 +20,7 @@ public class EnderecoService
     }
 
     public const string ErroNaoEncontrado = "Endereço não encontrado!";
-    public const string ErroCinemaVinculado = "Não é possível excluir pois existe cinema vinculado:";
+    public const string ErroCinemaVinculado = "Não é possível excluir pois existe cinema vinculado: ";
 
     public ReadEnderecoDTO AdicionaEndereco(CreateEnderecoDTO enderecoDTO)
     {

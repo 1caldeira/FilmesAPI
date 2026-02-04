@@ -61,6 +61,16 @@ public class FilmeService
         var filme = _context.Filmes.FirstOrDefault(f => f.Id == id);
         if (filme == null) return Result.Fail(ErroNaoEncontrado);
 
+        if (filme.Duracao != filmeDTO.Duracao)
+        {
+            bool temSessoesFuturas = _context.Sessoes.Any(s => s.FilmeId == id && s.Horario > DateTime.Now);
+
+            if (temSessoesFuturas)
+            {
+                return Result.Fail("Não é possível alterar a duração do filme pois existem sessões futuras agendadas. Cancele as sessões antes de editar.");
+            }
+        }
+
         _mapper.Map(filmeDTO, filme);
         _context.SaveChanges();
         return Result.Ok();
