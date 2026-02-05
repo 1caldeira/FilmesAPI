@@ -31,6 +31,7 @@ builder.Services.AddScoped<CinemaService>();
 builder.Services.AddScoped<EnderecoService>();
 builder.Services.AddScoped<FilmeService>();
 builder.Services.AddScoped<SessaoService>();
+builder.Services.AddScoped<TokenService>();
 
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>

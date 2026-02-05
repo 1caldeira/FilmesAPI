@@ -79,7 +79,12 @@ public class FilmeController : ControllerBase
     public IActionResult AtualizaFilme(int id, [FromBody] UpdateFilmeDTO filmeDTO)
     {
         Result result = _filmeService.AtualizaFilme(id, filmeDTO);
-        if (result.IsFailed) return NotFound();
+        if (result.IsFailed) {
+            if (result.Errors.Any(r => r.Message.Equals(FilmeService.ErroNaoEncontrado))) { 
+                return NotFound();
+            }
+            return BadRequest(result.Errors);
+        }
         return NoContent();
     }
 

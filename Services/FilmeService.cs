@@ -19,7 +19,7 @@ public class FilmeService
     }
 
     public const string ErroNaoEncontrado = "Filme não encontrado!";
-    public const string ErroSessaoVinculada = "Não é possível excluir pois existem sessoes vinculadas!";
+    public const string ErroSessaoVinculada = "Não é possível excluir ou editar o filme pois existem sessoes vinculadas!";
 
     public ReadFilmeDTO AdicionaFilme(CreateFilmeDTO filmeDTO)
     {
@@ -63,11 +63,11 @@ public class FilmeService
 
         if (filme.Duracao != filmeDTO.Duracao)
         {
-            bool temSessoesFuturas = _context.Sessoes.Any(s => s.FilmeId == id && s.Horario > DateTime.Now);
+            bool temSessoesVinculadas = _context.Sessoes.Any(s => s.FilmeId == id);
 
-            if (temSessoesFuturas)
+            if (temSessoesVinculadas)
             {
-                return Result.Fail("Não é possível alterar a duração do filme pois existem sessões futuras agendadas. Cancele as sessões antes de editar.");
+                return Result.Fail(ErroSessaoVinculada);
             }
         }
 
