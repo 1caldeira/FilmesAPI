@@ -4,8 +4,9 @@ using AutoMapper;
 using FilmesAPI.Data;
 using FilmesAPI.Data.DTO;
 using FilmesAPI.Models;
-using Microsoft.AspNetCore.Identity;
 using FluentResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 public class CinemaService
@@ -39,12 +40,18 @@ public class CinemaService
 
     public List<ReadCinemaDTO> ObterCinemas(int skip, int take, int? enderecoId)
     {
-        var query = _context.Cinemas.AsQueryable();
+        IQueryable<Cinema> query = _context.Cinemas
+        .Include(c => c.Endereco)           
+        .Include(c => c.Sessoes)            
+            .ThenInclude(s => s.Filme)      
+        .IgnoreQueryFilters()               
+        .AsQueryable();
+
         if (enderecoId != null)
         {
             query = query.Where(cinema => cinema.EnderecoId == enderecoId);
         }
-        var listaDeCinemas = query.OrderBy(c => c.Nome).Skip(skip).Take(take).ToList();
+        var listaDeCinemas = query.OrderBy(c => c.Id).Skip(skip).Take(take).ToList();
 
         return _mapper.Map<List<ReadCinemaDTO>>(listaDeCinemas);
     }

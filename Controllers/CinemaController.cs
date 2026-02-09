@@ -19,11 +19,15 @@ public class CinemaController : ControllerBase
         _cinemaService = cinemaService;
     }
 
-    [HttpPost]
+
     [Authorize(Roles = "admin")]
-    public IActionResult AdicionaCinema([FromBody] CreateCinemaDTO cinemaDTO) {
+    [HttpPost]
+    public IActionResult AdicionaCinema([FromBody] CreateCinemaDTO cinemaDTO)
+    {
+        // O service vai cuidar de tudo
         ReadCinemaDTO readDTO = _cinemaService.AdicionaCinema(cinemaDTO);
-        return CreatedAtAction(nameof(ObterCinemaPorId), new { Id = readDTO.Id }, readDTO);
+
+        return CreatedAtAction(nameof(ObterCinemaPorId), new { id = readDTO.Id }, readDTO);
     }
 
     [HttpGet("{id}")]

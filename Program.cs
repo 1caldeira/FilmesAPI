@@ -54,7 +54,7 @@ builder.Services.AddScoped<EnderecoService>();
 builder.Services.AddScoped<FilmeService>();
 builder.Services.AddScoped<SessaoService>();
 builder.Services.AddScoped<TokenService>();
-
+builder.Services.AddHttpClient<TmdbService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

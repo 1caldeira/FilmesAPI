@@ -33,20 +33,53 @@ public class FilmeService
     {
         var query = _context.Filmes.AsQueryable();
 
+
         if (dto.CinemaId != null)
         {
             query = query.Where(f => f.Sessoes.Any(s => s.CinemaId == dto.CinemaId));
         }
+
         if (!string.IsNullOrEmpty(dto.NomeFilme))
         {
             query = query.Where(f => f.Titulo.Contains(dto.NomeFilme));
         }
+
+
+        IOrderedQueryable<Filme> queryOrdenada;
+
         if (dto.ApenasDisponiveis)
         {
-            query = query.Include(f => f.Sessoes.Where(s => s.Horario.AddMinutes(Sessao.ToleranciaAtrasoMinutos) >= DateTime.Now));
+            // --- MODO CLIENTE (Padrão) ---
+
+            query = query.Include(f => f.Sessoes.Where(s => s.Horario.AddMinutes(Sessao.ToleranciaAtrasoMinutos) >= DateTime.Now))
+                         .ThenInclude(s => s.Cinema)
+                         .ThenInclude(c => c.Endereco);
+
+
+            queryOrdenada = query.OrderByDescending(f => f.Sessoes.Count).ThenBy(f => f.Titulo);
+        }
+        else
+        {
+            // --- MODO ADMIN---
+
+            query = query.IgnoreQueryFilters();
+
+
+            query = query.Include(f => f.Sessoes)
+                         .ThenInclude(s => s.Cinema)
+                         .ThenInclude(c => c.Endereco);
+
+            
+            queryOrdenada = query.OrderByDescending(f => f.DataLancamento);
         }
 
-        return _mapper.Map<List<ReadFilmeDTO>>(query.OrderByDescending(f => f.Sessoes.Count).ThenBy(f => f.Titulo).Skip(dto.Skip).Take(dto.Take).ToList());
+
+        var listaFilmes = queryOrdenada
+            .Skip(dto.Skip)
+            .Take(dto.Take)
+            .ToList();
+
+        return _mapper.Map<List<ReadFilmeDTO>>(listaFilmes);
     }
 
     public ReadFilmeDTO ObterFilmesPorId(int id)

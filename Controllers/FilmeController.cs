@@ -12,12 +12,14 @@ namespace FilmesAPI.Controllers;
 [Route("[controller]")]
 public class FilmeController : ControllerBase
 {
-    private FilmeService _filmeService;
+    private readonly FilmeService _filmeService;
+    private readonly TmdbService _tmdbService;
 
-    public FilmeController(FilmeService filmeService)
+    public FilmeController(FilmeService filmeService, TmdbService tmdbService)
     {
 
          _filmeService = filmeService;
+        _tmdbService = tmdbService;
     }
 
     /// <summary>
@@ -157,5 +159,37 @@ public class FilmeController : ControllerBase
             return BadRequest(result.Errors); 
         }
         return NoContent();
+    }
+
+    /// <summary>
+    /// Importa filmes do TMDB (Now Playing e Upcoming) automaticamente.
+    /// Requer permissão de Admin.
+    /// </summary>
+    [HttpPost("importar")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> ImportarFilmesDoTmdb()
+    {
+        // Chama o service
+        Result resultadoNow = await _tmdbService.ImportarFilmesNowPlaying();
+
+        // Se falhar, já retorna erro (Bad Request ou 500 dependendo de como você trata)
+        if (resultadoNow.IsFailed)
+        {
+            return StatusCode(500, resultadoNow.Errors[0].Message);
+        }
+
+        // Chama o segundo (opcional, pode fazer separado)
+        Result resultadoUp = await _tmdbService.ImportarFilmesUpcoming();
+
+        if (resultadoUp.IsFailed)
+        {
+            // Se o primeiro passou e o segundo falhou, avisa
+            return StatusCode(500, resultadoUp.Errors[0].Message);
+        }
+
+        // Combina as mensagens de sucesso para retornar pro Front
+        var mensagens = $"{resultadoNow.Successes[0].Message} | {resultadoUp.Successes[0].Message}";
+
+        return Ok(new { message = mensagens });
     }
 }
