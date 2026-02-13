@@ -57,7 +57,7 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddHttpClient<TmdbService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {

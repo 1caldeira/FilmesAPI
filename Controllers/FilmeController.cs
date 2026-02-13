@@ -63,9 +63,9 @@ public class FilmeController : ControllerBase
     /// <response code="404">Caso o ID do filme não seja encontrado</response>
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult ObterFilmesPorId(int id) {
+    public IActionResult ObterFilmesPorId(int id, [FromQuery]bool verSessoesPassadas = false) {
         bool isAdmin = User.IsInRole("admin");
-        ReadFilmeDTO dto = _filmeService.ObterFilmesPorId(id, isAdmin);
+        ReadFilmeDTO dto = _filmeService.ObterFilmesPorId(id, isAdmin, verSessoesPassadas);
         if (dto == null) return NotFound();
         return Ok(dto);
     }

@@ -2,8 +2,9 @@
 using FilmesAPI.Data;
 using FilmesAPI.Data.DTO;
 using FilmesAPI.Models;
-using Microsoft.EntityFrameworkCore;
 using FluentResults;
+using Microsoft.EntityFrameworkCore;
+
 
 
 namespace FilmesAPI.Services;
@@ -12,17 +13,26 @@ public class SessaoService
 {
     private IMapper _mapper;
     private AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public SessaoService(IMapper mapper, AppDbContext context)
+    public SessaoService(IMapper mapper, AppDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public const string ErroNaoEncontrado = "Sessao não encontrada!";
     public const string ErroSessaoJaPassou = "Só é possivel cancelar uma sessão que ainda não começou";
     public const string ErroHorarioIndisponivel = "O horário escolhido para a nova sessão está indisponível.";
     public const string ErroSessaoNoPassado = "Não é possível criar uma sessão no passado";
+
+    private string GetUserId()
+    {
+        var user = _httpContextAccessor.HttpContext!.User;
+        var id = user.FindFirst("id")!.Value;                     
+        return id;
+    }
 
     public Result<ReadSessaoDTO> AdicionaSessao(CreateSessaoDTO sessaoDTO)
     {
@@ -34,9 +44,21 @@ public class SessaoService
 
         var horarioFimNovaSessao = sessaoDTO.Horario.AddMinutes(filme.Duracao);
 
-        if (TemConflitoDeHorario(sessaoDTO.CinemaId,sessaoDTO.Sala,sessaoDTO.Horario, filme.Duracao, null))
+        var sessaoConflitante = ObterSessaoConflitante(
+            sessaoDTO.CinemaId,
+            sessaoDTO.Sala,
+            sessaoDTO.Horario,
+            filme.Duracao,
+            null
+        );
+
+        if (sessaoConflitante != null)
         {
-            return Result.Fail(ErroHorarioIndisponivel);
+            var inicio = sessaoConflitante.Horario.ToString("HH:mm");
+            var fim = sessaoConflitante.Horario.AddMinutes(sessaoConflitante.Filme.Duracao).ToString("HH:mm");
+            var dia = sessaoConflitante.Horario.Date.ToString("dd/MM/yyyy");
+
+            return Result.Fail($"Sala ocupada por: {sessaoConflitante.Filme.Titulo} ({dia} - {inicio} às {fim})");
         }
         if (sessaoDTO.Horario < DateTime.Now) 
         {
@@ -126,6 +148,7 @@ public class SessaoService
             return Result.Fail(ErroSessaoJaPassou);
         }
         sessao.DataExclusao = DateTime.Now;
+        sessao.UsuarioExclusaoId = GetUserId();
         _context.SaveChanges();
         return Result.Ok();
     }
@@ -147,5 +170,25 @@ public class SessaoService
         }
 
         return query.Any();
+    }
+
+    private Sessao? ObterSessaoConflitante(int cinemaId, int sala, DateTime horarioInicio, int duracaoFilme, int? sessaoIdIgnorar)
+    {
+        var horarioFim = horarioInicio.AddMinutes(duracaoFilme);
+
+        var query = _context.Sessoes
+            .Include(s => s.Filme)
+            .AsQueryable();
+
+        var conflito = query.FirstOrDefault(s =>
+            s.CinemaId == cinemaId
+            && s.Sala == sala
+            && s.DataExclusao == null
+            && (sessaoIdIgnorar == null || s.Id != sessaoIdIgnorar)
+            && horarioInicio < s.Horario.AddMinutes(s.Filme.Duracao) 
+            && horarioFim > s.Horario 
+        );
+
+        return conflito;
     }
 }

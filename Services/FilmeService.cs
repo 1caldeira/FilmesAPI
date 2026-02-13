@@ -2,8 +2,9 @@
 using FilmesAPI.Data;
 using FilmesAPI.Data.DTO;
 using FilmesAPI.Models;
-using Microsoft.EntityFrameworkCore;
 using FluentResults;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace FilmesAPI.Services;
 
@@ -11,15 +12,24 @@ public class FilmeService
 {
     private IMapper _mapper;
     private AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public FilmeService(IMapper mapper, AppDbContext context)
+    public FilmeService(IMapper mapper, AppDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public const string ErroNaoEncontrado = "Filme não encontrado!";
     public const string ErroSessaoVinculada = "Não é possível excluir ou editar o filme pois existem sessoes vinculadas!";
+
+    private string GetUserId()
+    {
+        var user = _httpContextAccessor.HttpContext!.User;
+        var id = user.FindFirst("id")!.Value;
+        return id;
+    }
 
     public ReadFilmeDTO AdicionaFilme(CreateFilmeDTO filmeDTO)
     {
@@ -82,21 +92,30 @@ public class FilmeService
         return _mapper.Map<List<ReadFilmeDTO>>(listaFilmes);
     }
 
-    public ReadFilmeDTO? ObterFilmesPorId(int id, bool isAdmin)
+    public ReadFilmeDTO? ObterFilmesPorId(int id, bool isAdmin, bool verSessoesPassadas)
     {
         var query = _context.Filmes.AsQueryable();
 
-        if (isAdmin) {
-            query = query.IgnoreQueryFilters();
+        if (isAdmin && verSessoesPassadas)
+        {
+            query = query.Include(f => f.Sessoes.Where(s => s.DataExclusao == null))
+                     .ThenInclude(s => s.Cinema)
+                     .ThenInclude(c => c.Endereco);
+        }
+        else {
+            query = query
+                .Include(f => f.Sessoes.Where(s => s.Horario >= DateTime.Now))
+                .ThenInclude(s => s.Cinema)
+                .ThenInclude(c => c.Endereco);
+                
         }
 
-        var filme = query
-        .Include(f => f.Sessoes)
-        .ThenInclude(s => s.Cinema)
-        .ThenInclude(c => c.Endereco)
-        .FirstOrDefault(f => f.Id == id);
+        var filme = query.FirstOrDefault(f => f.Id == id);
+
 
         if (filme == null) return null;
+
+        filme.Sessoes = filme.Sessoes.OrderBy(s => s.Horario).ToList();
 
         return _mapper.Map<ReadFilmeDTO>(filme);
     }
@@ -149,6 +168,7 @@ public class FilmeService
         if (possuiHistorico)
         {
             filme.DataExclusao = DateTime.Now;
+            filme.UsuarioExclusaoId = GetUserId();
         }
         else
         {

@@ -20,4 +20,5 @@ public class Sessao
 
     public static int ToleranciaAtrasoMinutos = 20;
     public DateTime? DataExclusao { get; set; }
+    public string? UsuarioExclusaoId { get; set; }
 }

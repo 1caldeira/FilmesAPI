@@ -19,6 +19,7 @@ public class Filme
     public string? DataLancamento { get; set; }
     public virtual ICollection<Sessao> Sessoes { get; set; }
     public DateTime? DataExclusao { get; set; }
+    public string? UsuarioExclusaoId { get; set; }
 
 
 }

@@ -13,4 +13,5 @@ public class Cinema
     public virtual Endereco Endereco { get; set; }
     public virtual ICollection<Sessao> Sessoes { get; set; }
     public DateTime? DataExclusao { get; set; }
+    public string? UsuarioExclusaoId { get; set; }
 }

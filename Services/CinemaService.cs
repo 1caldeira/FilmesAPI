@@ -5,23 +5,32 @@ using FilmesAPI.Data;
 using FilmesAPI.Data.DTO;
 using FilmesAPI.Models;
 using FluentResults;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
+
 
 public class CinemaService
 {
     private IMapper _mapper;
     private AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public CinemaService(IMapper mapper, AppDbContext context)
+    public CinemaService(IMapper mapper, AppDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public const string ErroNaoEncontrado = "Cinema não encontrado!";
     public const string ErroSessoesVinculadas = "Não é possível excluir o cinema ou editar seu endereço, pois ainda existem sessões pendentes!";
+
+    private string GetUserId()
+    {
+        var user = _httpContextAccessor.HttpContext!.User;
+        var id = user.FindFirst("id")!.Value;
+        return id;
+    }
 
     public ReadCinemaDTO AdicionaCinema(CreateCinemaDTO cinemaDTO)
     {
@@ -31,6 +40,7 @@ public class CinemaService
         return _mapper.Map<ReadCinemaDTO>(cinema);
     }
 
+    
     public ReadCinemaDTO? ObterCinemaPorId(int id)
     {
         var cinema = _context.Cinemas.FirstOrDefault(c => c.Id == id);
@@ -91,6 +101,7 @@ public class CinemaService
             return Result.Fail(ErroSessoesVinculadas);
         }
         cinema.DataExclusao = DateTime.Now;
+        cinema.UsuarioExclusaoId = GetUserId();
         _context.SaveChanges();
         return Result.Ok();
     }

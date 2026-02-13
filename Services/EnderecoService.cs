@@ -5,22 +5,31 @@ using FilmesAPI.Data;
 using FilmesAPI.Data.DTO;
 using FilmesAPI.Models;
 using FluentResults;
-using Microsoft.AspNetCore.Identity;
 using System;
+
 
 public class EnderecoService
 {
     private IMapper _mapper;
     private AppDbContext _context;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public EnderecoService(IMapper mapper, AppDbContext context)
+    public EnderecoService(IMapper mapper, AppDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public const string ErroNaoEncontrado = "Endereço não encontrado!";
     public const string ErroCinemaVinculado = "Não é possível excluir pois existe cinema vinculado: ";
+
+    private string GetUserId()
+    {
+        var user = _httpContextAccessor.HttpContext!.User;
+        var id = user.FindFirst("id")!.Value;
+        return id;
+    }
 
     public ReadEnderecoDTO AdicionaEndereco(CreateEnderecoDTO enderecoDTO)
     {
@@ -74,6 +83,7 @@ public class EnderecoService
             return Result.Fail(ErroCinemaVinculado+cinemaVinculado.Nome);
         }
         endereco.DataExclusao = DateTime.Now;
+        endereco.UsuarioExclusaoId = GetUserId();
         _context.SaveChanges();
         return Result.Ok();
     }

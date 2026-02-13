@@ -13,4 +13,5 @@ public class Endereco
     public int Numero { get; set; }
     public virtual Cinema Cinema { get; set; }
     public DateTime? DataExclusao { get; set; }
+    public string? UsuarioExclusaoId { get; set; }
 }
