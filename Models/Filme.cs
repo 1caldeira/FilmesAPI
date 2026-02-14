@@ -16,7 +16,8 @@ public class Filme
     public int Duracao { get; set; }
     public string? PosterUrl { get; set; }
     public string? Sinopse { get; set; }
-    public string? DataLancamento { get; set; }
+    [Required(ErrorMessage = "A data de lançamento é obrigatória!")]
+    public DateTime DataLancamento { get; set; }
     public virtual ICollection<Sessao> Sessoes { get; set; }
     public DateTime? DataExclusao { get; set; }
     public string? UsuarioExclusaoId { get; set; }

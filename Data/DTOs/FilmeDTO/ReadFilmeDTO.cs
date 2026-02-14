@@ -10,5 +10,5 @@ public class ReadFilmeDTO
     public ICollection<ReadSessaoSimpleDTO> Sessoes  { get; set; }
     public string Sinopse { get; set; }
     public string PosterUrl { get; set; }
-    public string DataLancamento { get; set; }
+    public DateTime DataLancamento { get; set; }
 }

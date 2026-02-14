@@ -1,4 +1,4 @@
-﻿using FilmesAPI.Data;
+using FilmesAPI.Data;
 using FilmesAPI.Models;
 using FilmesAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -62,7 +62,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-    options.SerializerSettings.DateFormatString = "dd-MM-yyyy HH:mm";
+    //options.SerializerSettings.DateFormatString = "dd-MM-yyyy HH:mm";
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -124,17 +124,61 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var services = scope.ServiceProvider;
+    var configuration = services.GetRequiredService<IConfiguration>(); // <--- PEGAR CONFIGURAÇÃO
+    try
+    {
+        var db = services.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+
+        var userManager = services.GetRequiredService<UserManager<Usuario>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+        if (!await roleManager.RoleExistsAsync("admin"))
+        {
+            await roleManager.CreateAsync(new IdentityRole("admin"));
+        }
+
+        var adminUser = await userManager.FindByNameAsync("admin");
+        if (adminUser == null)
+        {
+            adminUser = new Usuario
+            {
+                UserName = "admin",
+                Email = "admin@moovcine.com",
+                DataNascimento = DateTime.Now
+            };
+            string adminPassword = configuration["AdminPassword"] ?? "SenhaPadraoInsegura123!";
+
+            var result = await userManager.CreateAsync(adminUser, adminPassword);
+
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, "admin");
+                Console.WriteLine("Admin criado com sucesso");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Erro ao migrar ou criar admin.");
+    }
 }
 
-app.UseHttpsRedirection();
 
-app.UseCors("wasm"); 
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseAuthentication(); 
+
+
+// app.UseHttpsRedirection(); <--- evitando erro de SSL no container
+
+app.UseCors("wasm");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

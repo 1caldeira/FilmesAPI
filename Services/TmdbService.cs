@@ -46,16 +46,18 @@ public class TmdbService
 
     public async Task<Result> ImportarFilmesNowPlaying()
     {
-        return await ExecutarImportacao("now_playing",1);
+        await ExecutarImportacao("now_playing",1);
+        await ExecutarImportacao("now_playing", 2);
+        await ExecutarImportacao("now_playing", 3);
+        return Result.Ok();
     }
 
     public async Task<Result> ImportarFilmesUpcoming()
     {
-        // Importa página 1 (Geralmente filmes que lançam essa semana)
-        await ExecutarImportacao("upcoming", 1);
 
-        // Importa página 2 (Filmes que lançam mês que vem)
+        await ExecutarImportacao("upcoming", 1);
         await ExecutarImportacao("upcoming", 2);
+        await ExecutarImportacao("upcoming", 3);
 
         return Result.Ok();
     }
@@ -107,11 +109,11 @@ public class TmdbService
                     }
                 }
 
-                if (string.IsNullOrEmpty(detalhe.Overview))
-                {
-                    Console.WriteLine($"Pulando '{item.Title}': Sem tradução/sinopse.");
-                    continue;
-                }
+
+                DateTime dataLancamentoConvertida;
+                bool temDataValida = DateTime.TryParse(item.ReleaseDate, out dataLancamentoConvertida);
+
+                if (!temDataValida) continue; 
 
                 var novoFilme = new Filme
                 {
@@ -122,7 +124,7 @@ public class TmdbService
                     PosterUrl = !string.IsNullOrEmpty(item.PosterPath)
                         ? $"https://image.tmdb.org/t/p/w500{item.PosterPath}"
                         : null,
-                    DataLancamento = item.ReleaseDate
+                    DataLancamento = dataLancamentoConvertida
                 };
 
                 _context.Filmes.Add(novoFilme);

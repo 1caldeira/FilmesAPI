@@ -42,7 +42,8 @@ public class FilmeService
     public List<ReadFilmeDTO> ObterFilmes(FiltroFilmeDTO dto)
     {
         var query = _context.Filmes.AsQueryable();
-
+        var dataCorteCliente = DateTime.Now.AddMonths(-2);
+        var dataCorteAdmin = DateTime.Now.AddMonths(-4);
 
         if (dto.CinemaId != null)
         {
@@ -59,21 +60,22 @@ public class FilmeService
 
         if (dto.ApenasDisponiveis)
         {
-            query = query.Where(f => f.Sessoes.Any(s => s.Horario.AddMinutes(Sessao.ToleranciaAtrasoMinutos) >= DateTime.Now));
+            query = query.Where(f => f.Sessoes.Any(s => s.Horario.AddMinutes(Sessao.ToleranciaAtrasoMinutos) >= DateTime.Now)
+            && f.DataLancamento >= dataCorteCliente);
 
             
             query = query.Include(f => f.Sessoes.Where(s => s.Horario.AddMinutes(Sessao.ToleranciaAtrasoMinutos) >= DateTime.Now))
                          .ThenInclude(s => s.Cinema)
                          .ThenInclude(c => c.Endereco);
 
-            queryOrdenada = query.OrderByDescending(f => f.Sessoes.Count).ThenBy(f => f.Titulo);
+            queryOrdenada = query.OrderByDescending(f => f.Sessoes.Count).ThenByDescending(f => f.DataLancamento);
         }
         else
         {
             // --- MODO ADMIN---
 
             query = query.IgnoreQueryFilters();
-
+            query = query.Where(f => f.DataLancamento >= dataCorteAdmin);
 
             query = query.Include(f => f.Sessoes)
                          .ThenInclude(s => s.Cinema)

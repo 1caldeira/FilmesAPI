@@ -1,0 +1,35 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: moov-cine-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: filme
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+  api:
+    build: .
+    container_name: moov-cine-api
+    environment:
+      ConnectionStrings__FilmeConnection: "server=mysql;port=3306;database=filme;user=root;password=${MYSQL_PASSWORD}"
+      JwtSettings__SecretKey: "${JWT_SECRET}"
+      TMDB__ApiKey: "${TMDB_API_KEY}"
+      AdminPassword: "${ADMIN_PASSWORD}"
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
