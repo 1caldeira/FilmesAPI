@@ -74,7 +74,7 @@ public class FilmeService
             query = query.Where(f => f.DataLancamento >= dataCorteAdmin);
 
             query = query.Include(f => f.Sessoes.Where(s =>
-                            dto.CinemaId == null || s.CinemaId == dto.CinemaId))
+                            s.CinemaId == dto.CinemaId))
                          .ThenInclude(s => s.Cinema)
                          .ThenInclude(c => c.Endereco);
         }
