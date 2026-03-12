@@ -179,7 +179,8 @@ using (var scope = app.Services.CreateScope())
             {
                 UserName = "admin",
                 Email = "admin@moovcine.com",
-                DataNascimento = DateTime.Now
+                DataNascimento = DateTime.Now,
+                NomeCompleto = "Administrador do Sistema"
             };
             string adminPassword = configuration["AdminPassword"] ?? "SenhaPadraoInsegura123!";
 
