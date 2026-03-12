@@ -158,7 +158,7 @@ public class SessaoService
     {
         var horarioFim = horarioInicio.AddMinutes(duracaoFilme);
 
-        return _context.Sessoes.Local.Any(s =>
+        return _context.Sessoes.Local.ToList().Any(s =>
             s.CinemaId == cinemaId &&
             s.Sala == sala &&
             s.DataExclusao == null &&
@@ -273,7 +273,7 @@ public class SessaoService
 
     private bool FilmeJaEstaNesseHorario(int cinemaId, int filmeId, DateTime horario)
     {
-        return _context.Sessoes.Local.Any(s =>
+        return _context.Sessoes.Local.ToList().Any(s =>
             s.CinemaId == cinemaId && s.FilmeId == filmeId && s.Horario == horario);
     }
     
