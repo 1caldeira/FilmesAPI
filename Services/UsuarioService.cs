@@ -2,6 +2,7 @@
 using FilmesAPI.Data.DTO;
 using FilmesAPI.DTO;
 using FilmesAPI.Models;
+using FilmesAPI.Utils;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -91,13 +92,13 @@ public class UsuarioService
 
         byte[] tokenGeneratedBytes = Encoding.UTF8.GetBytes(token);
         string tokenCodificadoParaUrl = WebEncoders.Base64UrlEncode(tokenGeneratedBytes);
-        string resetLink = $"https://moovcine.site/redefinir-senha?email={user.Email}&token={tokenCodificadoParaUrl}";
+        string resetLink = $"https://moovcine.site/usuario/redefinir-senha?email={user.Email}&token={tokenCodificadoParaUrl}";
 
         var mensagemFila = new MensagemEmailDTO
         {
             Destinatario = user.Email,
             Assunto = "Moov Cine - Recuperação de Senha",
-            Corpo = $"<h1>Recuperação de Senha</h1><p>Olá, {user.UserName}. Clique aqui para redefinir: <a href='{resetLink}'>Redefinir Senha</a></p>"
+            Corpo = EmailTemplates.GetRedefinicaoTemplate(user.UserName, resetLink)
         };
 
         await _rabbitMqService.PublicarMensagemDeEmailAsync(mensagemFila);

@@ -41,7 +41,7 @@ public class UsuarioController : ControllerBase
         MensagemEmailDTO email = new MensagemEmailDTO();
         email.Assunto = "Confirmação de email MoovCine";
         email.Destinatario = dto.Email;
-        email.Corpo = EmailTemplates.GetConfirmacaoTemplate(linkConfirmacao, dto.NomeCompleto.Split(" ")[0]);
+        email.Corpo = EmailTemplates.GetConfirmacaoTemplate(dto.NomeCompleto.Split(" ")[0], linkConfirmacao);
 
         await _rabbitMqService.PublicarMensagemDeEmailAsync(email);
 
