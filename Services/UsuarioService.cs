@@ -92,7 +92,7 @@ public class UsuarioService
 
         byte[] tokenGeneratedBytes = Encoding.UTF8.GetBytes(token);
         string tokenCodificadoParaUrl = WebEncoders.Base64UrlEncode(tokenGeneratedBytes);
-        string resetLink = $"https://moovcine.site/usuario/redefinir-senha?email={user.Email}&token={tokenCodificadoParaUrl}";
+        string resetLink = $"https://moovcine.site/redefinir-senha?email={user.Email}&token={tokenCodificadoParaUrl}";
 
         var mensagemFila = new MensagemEmailDTO
         {
