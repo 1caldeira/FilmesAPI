@@ -4,10 +4,10 @@ namespace FilmesAPI.Data.DTO;
 
 public class CreateUsuarioDTO
 {
-    [Required]
     public string Username { get; set; }
     [Required]
     public string NomeCompleto { get; set; }
+    public string PrimeiroNome { get; set; }
     [Required]
     public DateTime DataNascimento { get; set; }
     [Required]

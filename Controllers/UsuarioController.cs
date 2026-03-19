@@ -35,13 +35,16 @@ public class UsuarioController : ControllerBase
     public async Task<IActionResult> CadastraUsuario(CreateUsuarioDTO dto)
     {
         string baseUrl = _configuration["FrontEndUrl"];
+        var primeiroNome = dto.NomeCompleto.Split(" ")[0];
+        dto.PrimeiroNome = primeiroNome;
+        dto.Username = dto.Email;
         var (usuarioId,token) = await _usuarioService.Cadastra(dto);
         var tokenCodificado = System.Web.HttpUtility.UrlEncode(token);
         var linkConfirmacao = $"{baseUrl}/confirmar-email?userId={usuarioId}&token={tokenCodificado}";
         MensagemEmailDTO email = new MensagemEmailDTO();
         email.Assunto = "Confirmação de email MoovCine";
         email.Destinatario = dto.Email;
-        email.Corpo = EmailTemplates.GetConfirmacaoTemplate(dto.NomeCompleto.Split(" ")[0], linkConfirmacao);
+        email.Corpo = EmailTemplates.GetConfirmacaoTemplate(primeiroNome, linkConfirmacao);
 
         await _rabbitMqService.PublicarMensagemDeEmailAsync(email);
 
