@@ -98,7 +98,7 @@ public class UsuarioService
         {
             Destinatario = user.Email,
             Assunto = "Moov Cine - Recuperação de Senha",
-            Corpo = EmailTemplates.GetRedefinicaoTemplate(user.UserName, resetLink)
+            Corpo = EmailTemplates.GetRedefinicaoTemplate(user.PrimeiroNome, resetLink)
         };
 
         await _rabbitMqService.PublicarMensagemDeEmailAsync(mensagemFila);
