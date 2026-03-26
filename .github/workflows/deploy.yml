@@ -1,0 +1,53 @@
+name: CI/CD Moov Cine
+
+on:
+  push:
+    branches: [ "main" ]
+
+concurrency:
+  group: moov-cine-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Baixar o código
+      uses: actions/checkout@v3
+
+    - name: Configurar o .NET 8
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache Nuget
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restaurar dependências
+      run: dotnet restore
+
+    - name: Buildar o projeto
+      run: dotnet build --no-restore
+
+    - name: Rodar os testes automatizados
+      run: dotnet test --no-build --verbosity normal
+
+  deploy-aws:
+    needs: build-and-test 
+    runs-on: ubuntu-latest
+    steps:
+    - name: Conectar na AWS e fazer o Deploy
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ${{ secrets.AWS_USERNAME }}
+        key: ${{ secrets.AWS_KEY }}
+        script: |
+          cd moov-cine-backend
+          git pull origin main
+          sudo docker compose up --build -d --remove-orphans
