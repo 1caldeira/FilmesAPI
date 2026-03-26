@@ -11,14 +11,18 @@
 
   <ItemGroup>
     <Compile Remove="Data\CreateFilmeDTO\**" />
+    <Compile Remove="NovaPasta\**" />
     <Content Remove="Data\CreateFilmeDTO\**" />
+    <Content Remove="NovaPasta\**" />
     <EmbeddedResource Remove="Data\CreateFilmeDTO\**" />
+    <EmbeddedResource Remove="NovaPasta\**" />
     <None Remove="Data\CreateFilmeDTO\**" />
 
     <Compile Remove="MoovCine.Tests\**" />
     <Content Remove="MoovCine.Tests\**" />
     <EmbeddedResource Remove="MoovCine.Tests\**" />
     <None Remove="MoovCine.Tests\**" />
+    <None Remove="NovaPasta\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,7 +57,6 @@
 
   <ItemGroup>
     <Folder Include="Migrations\" />
-    <Folder Include="NovaPasta\" />
   </ItemGroup>
 
 </Project>
