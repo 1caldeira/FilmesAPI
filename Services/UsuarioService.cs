@@ -15,13 +15,13 @@ public class UsuarioService : IUsuarioService
     private IMapper _mapper;
     private UserManager<Usuario> _userManager;
     private SignInManager<Usuario> _signInManager;
-    private TokenService _tokenService;
+    private ITokenService _tokenService;
     private RoleManager<IdentityRole> _roleManager;
-    private RabbitMqService _rabbitMqService;
+    private IRabbitMqService _rabbitMqService;
 
     public UsuarioService(IMapper mapper, UserManager<Usuario> userManager,
-        SignInManager<Usuario> signInManager, TokenService tokenService, RoleManager<IdentityRole> roleManager,
-        RabbitMqService rabbitMqService)
+        SignInManager<Usuario> signInManager, ITokenService tokenService, RoleManager<IdentityRole> roleManager,
+        IRabbitMqService rabbitMqService)
     {
         _mapper = mapper;
         _userManager = userManager;
