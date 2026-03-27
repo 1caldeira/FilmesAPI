@@ -4,6 +4,7 @@ using FilmesAPI.DTO;
 using FilmesAPI.Models;
 using FilmesAPI.Profiles;
 using FilmesAPI.Services;
+using FilmesAPI.Services.Interfaces;
 using FluentResults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -20,9 +21,9 @@ public class UsuarioServiceTests
     private readonly Mock<UserManager<Usuario>> _userManagerMock;
     private readonly Mock<SignInManager<Usuario>> _signInManagerMock;
     private readonly Mock<RoleManager<IdentityRole>> _roleManagerMock;
-    private readonly Mock<RabbitMqService> _rabbitMqServiceMock;
+    private readonly Mock<IRabbitMqService> _rabbitMqServiceMock;
+    private readonly Mock<ITokenService> _tokenServiceMock;
     private readonly Mock<IConfiguration> _configurationMock;
-    private readonly TokenService _tokenService;
     private readonly IMapper _mapper;
     private readonly UsuarioService _usuarioService;
 
@@ -45,17 +46,14 @@ public class UsuarioServiceTests
         _roleManagerMock = new Mock<RoleManager<IdentityRole>>(roleStore.Object, null, null, null, null);
 
         _configurationMock = new Mock<IConfiguration>();
-        _configurationMock.Setup(c => c["FrontEndUrl"]).Returns("http://localhost:3000");
-        _configurationMock.Setup(c => c["JwtSettings:SecretKey"]).Returns("MinhaChaveSecretaSuperSeguraParaTestes1234567890");
-
-        _tokenService = new TokenService(_configurationMock.Object);
-        _rabbitMqServiceMock = new Mock<RabbitMqService>(_configurationMock.Object);
+        _tokenServiceMock = new Mock<ITokenService>();
+        _rabbitMqServiceMock = new Mock<IRabbitMqService>();
 
         _usuarioService = new UsuarioService(
             _mapper,
             _userManagerMock.Object,
             _signInManagerMock.Object,
-            _tokenService,
+            _tokenServiceMock.Object,
             _roleManagerMock.Object,
             _rabbitMqServiceMock.Object
         );
@@ -67,24 +65,41 @@ public class UsuarioServiceTests
         var dto = new LoginUsuarioDTO { Email = "teste@teste.com", Password = "Password123!" };
         var usuario = new Usuario { UserName = "teste", NormalizedUserName = "teste@teste.com" };
 
-        _signInManagerMock.Setup(s => s.PasswordSignInAsync(dto.Email, dto.Password, false, false))
+        _userManagerMock.Setup(u => u.FindByEmailAsync(dto.Email)).ReturnsAsync(usuario);
+
+        _signInManagerMock.Setup(s => s.PasswordSignInAsync(usuario.UserName, dto.Password, false, false))
             .ReturnsAsync(SignInResult.Success);
             
-        _userManagerMock.Setup(u => u.Users).Returns(new List<Usuario> { usuario }.AsQueryable());
         _userManagerMock.Setup(u => u.GetRolesAsync(usuario)).ReturnsAsync(new List<string> { "admin" });
+        
+        _tokenServiceMock.Setup(t => t.GenerateToken(usuario, "admin")).Returns("TOKENMOCKADO");
 
         var token = await _usuarioService.Login(dto);
 
-        Assert.False(string.IsNullOrEmpty(token));
+        Assert.Equal("TOKENMOCKADO", token);
     }
 
     [Fact]
-    public async Task Login_Falha_LancaApplicationException()
+    public async Task Login_Falha_SenhaIncorreta_LancaApplicationException()
+    {
+        var dto = new LoginUsuarioDTO { Email = "teste@teste.com", Password = "WrongPassword!" };
+        var usuario = new Usuario { UserName = "teste" };
+
+        _userManagerMock.Setup(u => u.FindByEmailAsync(dto.Email)).ReturnsAsync(usuario);
+
+        _signInManagerMock.Setup(s => s.PasswordSignInAsync(usuario.UserName, dto.Password, false, false))
+            .ReturnsAsync(SignInResult.Failed);
+
+        var exception = await Assert.ThrowsAsync<ApplicationException>(() => _usuarioService.Login(dto));
+        Assert.Equal("Usuario ou senha incorretos.", exception.Message);
+    }
+    
+    [Fact]
+    public async Task Login_Falha_EmailIncorreto_LancaApplicationException()
     {
         var dto = new LoginUsuarioDTO { Email = "teste@teste.com", Password = "WrongPassword!" };
 
-        _signInManagerMock.Setup(s => s.PasswordSignInAsync(dto.Email, dto.Password, false, false))
-            .ReturnsAsync(SignInResult.Failed);
+        _userManagerMock.Setup(u => u.FindByEmailAsync(dto.Email)).ReturnsAsync((Usuario?)null);
 
         var exception = await Assert.ThrowsAsync<ApplicationException>(() => _usuarioService.Login(dto));
         Assert.Equal("Usuario ou senha incorretos.", exception.Message);

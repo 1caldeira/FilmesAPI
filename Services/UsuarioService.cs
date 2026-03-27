@@ -33,15 +33,19 @@ public class UsuarioService : IUsuarioService
 
     public virtual async Task<string> Login(LoginUsuarioDTO dto)
     {
-        var resultado = await _signInManager.PasswordSignInAsync(dto.Email, dto.Password, false, false);
+        var usuario = await _userManager.FindByEmailAsync(dto.Email);
+        if (usuario == null)
+        {
+            throw new ApplicationException("Usuario ou senha incorretos.");
+        }
+
+        var resultado = await _signInManager.PasswordSignInAsync(usuario.UserName!, dto.Password, false, false);
         if (!resultado.Succeeded)
         {
             throw new ApplicationException("Usuario ou senha incorretos.");
         }
-        var usuario = _signInManager.UserManager.Users.FirstOrDefault(
-            user => user.NormalizedUserName == dto.Email);
 
-        var roles = await _signInManager.UserManager.GetRolesAsync(usuario);
+        var roles = await _userManager.GetRolesAsync(usuario);
         var roleDoUsuario = roles.FirstOrDefault() ?? "usuario";
 
         var token = _tokenService.GenerateToken(usuario, roleDoUsuario);
