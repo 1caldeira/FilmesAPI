@@ -70,7 +70,7 @@ builder.Services.AddScoped<IFilmeService, FilmeService>();
 builder.Services.AddScoped<ISessaoService, SessaoService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddHttpClient<ITmdbService, TmdbService>();
-builder.Services.AddScoped<IRabbitMqService, RabbitMqService>();
+builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
 builder.Services.AddHostedService<EmailWorker>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
